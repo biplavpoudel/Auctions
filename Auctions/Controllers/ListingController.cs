@@ -31,23 +31,22 @@ namespace Auctions.Controllers
         }
 
         // GET: Listings/Details/5
-        //public async Task<IActionResult> Details(int? id)
-        //{
-        //    if (id == null)
-        //    {
-        //        return NotFound();
-        //    }
+        public async Task<IActionResult> Details(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
 
-        //    var listing = await _context.Listings
-        //        .Include(l => l.User)
-        //        .FirstOrDefaultAsync(m => m.Id == id);
-        //    if (listing == null)
-        //    {
-        //        return NotFound();
-        //    }
+            var listing = await _listingsService.GetById(id);
 
-        //    return View(listing);
-        //}
+            if (listing == null)
+            {
+                return NotFound();
+            }
+
+            return View(listing);
+        }
 
         // GET: Listings/Create
         public IActionResult Create()
@@ -67,7 +66,6 @@ namespace Auctions.Controllers
             {
                 string uploadDir = Path.Combine(_webHostEnvironment.WebRootPath, "images");
                 string fileName = listing.Image.FileName;
-                Console.WriteLine($"The filename is: {fileName}.");
                 string filePath = Path.Combine(uploadDir, fileName);
                 using (var fileStream = new FileStream(filePath, FileMode.Create))
                 {

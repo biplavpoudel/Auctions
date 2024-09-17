@@ -1,4 +1,7 @@
 ﻿@model Auctions.Models.Listing
+@using Microsoft.AspNetCore.Identity;
+@using System.Globalization;
+@inject UserManager<IdentityUser> userManager
 
 @{
     ViewData["Title"] = "Details";
@@ -6,49 +9,86 @@
 
 <h1>Details</h1>
 
-<div>
-    <h4>Listing</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Title)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Title)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Description)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Description)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Price)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Price)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.ImagePath)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.ImagePath)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.IsSold)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.IsSold)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.User)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.User.Id)
-        </dd>
-    </dl>
+@if (User.Identity.IsAuthenticated)
+{
+    if(Model.IsSold == true)
+    {
+        foreach(var bid in Model.Bids)
+        {
+            if (bid.Price == Model.Price)
+            {
+                if(bid.IdentityUserId == userManager.GetUserId(User))
+                {
+                    <h5>Congratulations, you are the winner of the auction!</h5>
+                }
+                else if(userManager.GetUserId(User) == Model.User.Id) //if user is the model creator
+                {
+                    <h5>@bid.User.UserName is the bid winner!</h5>
+                }
+                else
+                {
+                    <h5>Bidding is closed!</h5>
+                }
+            }
+        }
+    }
+}
+
+<h4 style="text-align:center;">@Model.Title</h4>
+<div class="container" style="background-color:rgba(138,129,133,0.6); margin:50px 0px 50px 0px; padding:20px; border-radius:10px;">
+    <div class="row">
+        <div class="col col-xs-6 col-lg-5">
+            <img src="~/images/@Model.ImagePath" style="max-width: 100%; max-height:60vh;" alt="@Model.ImagePath" />
+        </div>
+        <div class="col col-xs-6 col-lg-7">
+            <div>@Model.Description</div>
+            @if (User.Identity.IsAuthenticated)
+            {
+                <form asp-action="AddBid" method="post">
+                    <div>
+                        Bid: <input type="number" min="@Model.Price" step="1" name="Price" placeholder="@Model.Price.ToString("C", new CultureInfo("en-US")))" />
+                        <input type="hidden" name="IdentityUserId" class="form-control" value="@userManager.GetUserId(User)"/>
+                        <input type="hidden" name="ListingId" class="form-control" value="@Model.Id" />
+                        <input type="submit" class="btn btn-primary"/>
+                    </div>
+                </form>
+                <p>Bids Submitted: @Model.Bids.Count</p>
+                <br />
+                @if(userManager.GetUserId(User) == Model.User.Id)
+                {
+                    @foreach (var bid in Model.Bids)
+                    {
+                        <ul style="list-style-type: none">
+                            @bid.User.UserName bidded @bid.Price.ToString("C", new CultureInfo("en-US")).
+                        </ul>
+                    }
+                }
+            }
+            else
+            {
+                <div>
+                    Bid: <input type="number" min="@Model.Price" step="1" name="Price" placeholder="@Model.Price.ToString("C", new CultureInfo("en-US")))" />
+                    <input disabled type="submit" class="btn btn-primary" />
+                </div>
+                <p>Bids Submitted: @Model.Bids.Count</p>
+            }
+
+            <div>Listed by: @Model.User.UserName</div>
+
+            @if (User.Identity.IsAuthenticated)
+            {
+                @if (userManager.GetUserId(User) == Model.User.Id)
+                {
+                    @if (Model.IsSold == false)
+                    {
+                        <a asp-action="CloseBidding" asp-route-id="@Model.Id">CLose Bidding</a>
+                    }
+                }
+            }
+
+        </div>
+    </div>
 </div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.Id">Edit</a> |
-    <a asp-action="Index">Back to List</a>
-</div>
+
+<br>
+
