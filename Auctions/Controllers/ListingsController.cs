@@ -95,7 +95,7 @@ namespace Auctions.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> AddBid([Bind("Id, Price, ListingId, identityUserId")] Bid bid)
+        public async Task<ActionResult> AddBid([Bind("Id, Price, ListingId, IdentityUserId")] Bid bid)
         {
             if (ModelState.IsValid)
             {
