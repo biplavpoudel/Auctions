@@ -15,12 +15,14 @@ namespace Auctions.Controllers
     {
         private readonly IListingsService _listingsService;
         private readonly IBidsService _bidsService;
+        private readonly ICommentsService _commentsService;
         private readonly IWebHostEnvironment _webHostEnvironment;
 
-        public ListingsController(IListingsService listingsService, IBidsService bidsService, IWebHostEnvironment webHostEnvironment)
+        public ListingsController(IListingsService listingsService, IBidsService bidsService, ICommentsService commentsService, IWebHostEnvironment webHostEnvironment)
         {
             _listingsService = listingsService;
             _bidsService = bidsService;
+            _commentsService = commentsService;
             _webHostEnvironment = webHostEnvironment;
 
         }
@@ -35,7 +37,7 @@ namespace Auctions.Controllers
                 applicationDbContext = applicationDbContext.Where(a => a.Title.Contains(searchString));
                 return View(await PaginatedList<Listing>.CreateAsync(applicationDbContext.Where(l => l.IsSold == false).AsNoTracking(), pageNumber ?? 1, pageSize));
             }
-            return View(await PaginatedList<Listing>.CreateAsync(applicationDbContext.Where(l=>l.IsSold==false).AsNoTracking(), pageNumber ??1, pageSize));
+            return View(await PaginatedList<Listing>.CreateAsync(applicationDbContext./*Where(l => l.IsSold == false).*/AsNoTracking(), pageNumber ??1, pageSize));
 
         }
 
@@ -108,13 +110,23 @@ namespace Auctions.Controllers
             return View("Details", listing);
         }
 
-        [HttpPost]
         public async Task<ActionResult> CloseBidding(int id)
         {
             var listing = await _listingsService.GetById(id);
             listing.IsSold = true;
             await _listingsService.SaveChanges();
 
+            return View("Details", listing);
+        }
+
+        [HttpPost]
+        public async Task<ActionResult> AddComment([Bind("Id, Content, ListingId, IdentityUserId")] Comment comment)
+        {
+            if (ModelState.IsValid)
+            {
+                await _commentsService.Add(comment);
+            }
+            var listing = await _listingsService.GetById(comment.ListingId);
             return View("Details", listing);
         }
 
