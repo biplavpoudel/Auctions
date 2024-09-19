@@ -35,4 +35,8 @@ public class ListingsService : IListingsService
 
     }
 
+    public async Task SaveChanges()
+    {
+        await _context.SaveChangesAsync();
+    }
 }
